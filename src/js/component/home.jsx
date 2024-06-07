@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import "../../styles/index.css";
-// Crear tu primer componente
+
 const Home = () => {
 	const [inputValue, setInputValue] = useState('');
 	const [todos, setTodos] = useState([]);
@@ -10,7 +10,6 @@ const Home = () => {
 		fetch('https://playground.4geeks.com/todo/users/yahg2005')
 		  .then(response => response.json())
 		  .then(data => setTodos(data.todos))
-
 		  .catch(error => console.error('Error al cargar las tareas:', error));
 	}, []);
 
@@ -18,18 +17,18 @@ const Home = () => {
 		if (inputValue.trim()) {
 			console.log('Añadiendo tarea:', inputValue.trim());
 			
-			const newTask = { label: inputValue.trim(), done: false };
-			console.log('Nueva tarea creada:', newTask);
+			const nuevaTarea = { label: inputValue.trim(), done: false };
+			console.log('Nueva tarea creada:', nuevaTarea);
 			
-			const updatedTodos = [...todos, newTask];
-			console.log('Lista de tareas actualizada:', updatedTodos);
+			const tareasActualizadas = [...todos, nuevaTarea];
+			console.log('Lista de tareas actualizada:', tareasActualizadas);
 	
 			fetch('https://playground.4geeks.com/todo/users/yahg2005', {
 				method: 'PUT',
 				headers: {
 					'Content-Type': 'application/json',
 				},
-				body: JSON.stringify(updatedTodos),
+				body: JSON.stringify(tareasActualizadas),
 			})
 			.then(response => {
 				console.log('Respuesta de la API:', response);
@@ -37,7 +36,7 @@ const Home = () => {
 			})
 			.then(data => {
 				console.log('Datos recibidos de la API:', data);
-				setTodos(updatedTodos);
+				setTodos(tareasActualizadas);
 			})
 			.catch(error => console.error('Error al agregar la tarea:', error));
 	
@@ -48,15 +47,15 @@ const Home = () => {
 	const handleDelete = (index) => {
 		console.log('Índice de la tarea a eliminar:', index);
 		
-		const newTodos = todos.filter((_, todoIndex) => todoIndex !== index);
-		console.log('Lista de tareas actualizada después de eliminar:', newTodos);
+		const nuevasTareas = todos.filter((_, todoIndex) => todoIndex !== index);
+		console.log('Lista de tareas actualizada después de eliminar:', nuevasTareas);
 	
 		fetch('https://playground.4geeks.com/todo/users/yahg2005', {
 			method: 'PUT',
 			headers: {
 				'Content-Type': 'application/json',
 			},
-			body: JSON.stringify(newTodos),
+			body: JSON.stringify(nuevasTareas),
 		})
 		.then(response => {
 			console.log('Respuesta de la API:', response);
@@ -64,7 +63,7 @@ const Home = () => {
 		})
 		.then(data => {
 			console.log('Datos recibidos de la API:', data);
-			setTodos(newTodos);
+			setTodos(nuevasTareas);
 		})
 		.catch(error => console.error('Error al eliminar la tarea:', error));
 	};
@@ -76,7 +75,55 @@ const Home = () => {
 			handleAddTask();
 		}
 	};
-	
+
+	const ClearAll = () => {
+		console.log('Eliminando todas las tareas');
+		
+		const clearTodos = [];
+		
+		fetch('https://playground.4geeks.com/todo/users/yahg2005', {
+			method: 'PUT',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify(clearTodos),
+		})
+		.then(response => {
+			console.log('Respuesta de la API:', response);
+			return response.json();
+		})
+		.then(data => {
+			console.log('Datos recibidos de la API:', data);
+			setTodos(clearTodos);
+		})
+		.catch(error => console.error('Error al eliminar todas las tareas:', error));
+	};
+
+	const toggleTask = (index) => {
+		const updatedTodos = todos.map((todo, todoIndex) => {
+			if (todoIndex === index) {
+				return { ...todo, done: !todo.done };
+			}
+			return todo;
+		});
+		setTodos(updatedTodos);
+
+		fetch('https://playground.4geeks.com/todo/users/yahg2005', {
+			method: 'PUT',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify(updatedTodos),
+		})
+		.then(response => {
+			console.log('Respuesta de la API:', response);
+			return response.json();
+		})
+		.then(data => {
+			console.log('Datos recibidos de la API:', data);
+		})
+		.catch(error => console.error('Error al actualizar la tarea:', error));
+	};
 
 	return (
 		<div className="container">
@@ -88,13 +135,18 @@ const Home = () => {
 						onChange={(e) => setInputValue(e.target.value)}
 						value={inputValue}
 						onKeyDown={handleKeyDown}
-						placeholder="What do you need to do?" />
+						placeholder="¿Qué necesitas hacer?" />
 				</li>
 				{todos.length === 0 ? (
 					<li>No hay tareas, añadir tareas</li>
 				) : (
 					todos.map((item, index) => (
 						<li key={index} className="todo-item">
+							<input 
+								type="checkbox" 
+								checked={item.done}
+								onChange={() => toggleTask(index)}
+							/>
 							{item.label}
 							<span
 								className="fas fa-trash-alt"
@@ -103,7 +155,10 @@ const Home = () => {
 					))
 				)}
 			</ul>
-			<div>{todos.length} tasks left</div>
+			<div>{todos.filter(todo => !todo.done).length} tareas pendientes</div>
+			<button onClick={ClearAll} style={{ color: 'white', backgroundColor: 'orange', border: 'none', padding: '10px 20px', borderRadius: '12px' }}>
+				Limpiar Lista
+			</button>  
 		</div>
 	);
 };
